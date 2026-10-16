@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 
+from app.api.itineraries import router as itineraries_router
+
 app = FastAPI(
     title="AI Travel Planning Agent API",
     description="Source-aware travel itinerary planning API.",
     version="0.1.0",
 )
+
+app.include_router(itineraries_router)
 
 
 @app.get("/health", tags=["operations"])

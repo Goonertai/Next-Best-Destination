@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { TripPreferencesForm } from "./TripPreferencesForm";
+
 const steps = [
   {
     number: "01",
@@ -48,7 +51,7 @@ export default function HomePage() {
             A travel plan shaped around your pace, your people, and the places
             you actually want to see.
           </p>
-          <a className="primary-button" href="#how-it-works">
+          <a className="primary-button" href="#trip-preferences">
             Start planning <span aria-hidden="true">→</span>
           </a>
           <p className="hero-footnote">Your plan. Your pace. No guesswork.</p>
@@ -82,6 +85,22 @@ export default function HomePage() {
       </section>
 
       <section
+        className="planner-section"
+        id="trip-preferences"
+        aria-labelledby="planner-title"
+      >
+        <div className="planner-heading">
+          <p className="eyebrow">START WITH THE DETAILS</p>
+          <h2 id="planner-title">Tell us about your trip.</h2>
+          <p>
+            Share your dates, budget, and interests. We will validate the setup
+            before connecting itinerary generation.
+          </p>
+        </div>
+        <TripPreferencesForm />
+      </section>
+
+      <section
         className="steps"
         id="how-it-works"
         aria-label="How Waypoint works"
@@ -110,4 +129,3 @@ export default function HomePage() {
     </main>
   );
 }
-import Link from "next/link";

@@ -5,8 +5,8 @@ Each day is a goal, not a quota. Prefer one small, tested, reviewable increment.
 ## Week 1 — Foundation
 
 - [x] Day 1: Initialize monorepo, frontend, backend, linting/formatting configuration, and README.
-- [ ] Day 2: Implement travel preferences form and validation.
-- [ ] Day 3: Create FastAPI endpoints and structured itinerary schemas.
+- [x] Day 2: Implement travel preferences form and validation.
+- [x] Day 3: Create FastAPI endpoints and structured itinerary schemas.
 - [ ] Day 4: Integrate LLM API and basic itinerary generation.
 - [ ] Day 5: Add an Agent tool interface and structured tool outputs.
 - [ ] Day 6: Implement itinerary display components.
