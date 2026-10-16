@@ -43,4 +43,4 @@ Copy `.env.example` to `.env` when integrations are introduced. Do not commit se
 
 ## Current status
 
-Day 1 establishes the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Later roadmap tasks add trip planning behavior, provider integrations, persistence, and deployment configuration.
+Day 1 established the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Day 2 adds a validated trip-preferences form. Day 3 adds typed itinerary and preference schemas plus a preferences-validation endpoint; itinerary generation, provider integrations, persistence, and deployment configuration remain on the roadmap.
