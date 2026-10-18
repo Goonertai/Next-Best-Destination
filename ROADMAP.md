@@ -53,3 +53,5 @@ Each day is a goal, not a quota. Prefer one small, tested, reviewable increment.
 7. After approval, commit the reviewed changes, push the feature branch, and open the PR. If GitHub is not connected, keep work local and report the exact missing setup. Do not merge failing CI.
 
 Production deployment, billing changes, database-destructive operations, and credential changes require explicit owner approval.
+
+Day 4 note: `OPENAI_API_KEY` is not configured in the development environment. The local implementation provides a deterministic demo endpoint for integration testing; live LLM generation remains blocked and Day 4 stays unchecked until the LLM provider is wired and exercised.

@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -126,3 +126,21 @@ class Itinerary(BaseModel):
     days: list[ItineraryDay]
     total_estimated_cost: Estimate | None = None
     generated_at: datetime
+
+
+class ItineraryDraftDay(BaseModel):
+    """A date with non-factual activity prompts, not verified venues."""
+
+    date: date
+    suggestions: list[str]
+
+
+class ItineraryDraft(BaseModel):
+    """An explicitly incomplete demo draft with no verified travel data."""
+
+    destination: Annotated[str, Field(min_length=1, max_length=160)]
+    generation_mode: Literal["demo"]
+    is_complete_itinerary: Literal[False]
+    uses_verified_place_data: Literal[False]
+    notice: str
+    days: list[ItineraryDraftDay]
