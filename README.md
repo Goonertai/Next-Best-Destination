@@ -43,4 +43,8 @@ Copy `.env.example` to `.env` when integrations are introduced. Do not commit se
 
 ## Current status
 
-Day 1 established the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Day 2 adds a validated trip-preferences form. Day 3 adds typed itinerary and preference schemas plus a preferences-validation endpoint; itinerary generation, provider integrations, persistence, and deployment configuration remain on the roadmap.
+Day 1 established the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Day 2 adds a validated trip-preferences form. Day 3 adds typed itinerary and preference schemas plus a preferences-validation endpoint. Day 4 adds a deterministic demo draft endpoint; live LLM generation is blocked until `OPENAI_API_KEY` is configured. Real place discovery, persistence, and deployment remain on the roadmap.
+
+### Try the demo draft endpoint
+
+Start the API with `cd apps/api && uv run --extra dev uvicorn app.main:app --reload`, then open `http://localhost:8000/docs` and submit the preferences schema to `POST /itineraries/generate`. The response contains generic interest-based prompts only. It is marked as an incomplete demo and contains no retrieved or verified venues, opening hours, prices, routes, or weather.
