@@ -5,6 +5,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.agent.generation import DemoItineraryGenerator, ItineraryGenerator
+from app.agent.tools import (
+    ActivityIdeasRequest,
+    ActivityIdeasResult,
+    suggest_activity_ideas,
+)
 from app.domain.schemas import (
     ItineraryDraft,
     PreferencesValidationResponse,
@@ -34,3 +39,9 @@ def generate_demo_draft(
 ) -> ItineraryDraft:
     """Return an explicitly incomplete, non-verified demo draft."""
     return generator.generate(preferences)
+
+
+@router.post("/activity-ideas", response_model=ActivityIdeasResult)
+def generate_activity_ideas(request: ActivityIdeasRequest) -> ActivityIdeasResult:
+    """Return deterministic generic prompts; this does not search real-world listings."""
+    return suggest_activity_ideas(request)
