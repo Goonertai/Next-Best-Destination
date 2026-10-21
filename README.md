@@ -41,9 +41,11 @@ Each daily run produces tested local changes and a review packet with a diff, te
 
 Copy `.env.example` to `.env` when integrations are introduced. Do not commit secrets. No external API credentials are required for the Day 1 health check.
 
+For local web-to-API requests, the API allows `http://localhost:3000` by default. Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of exact web app origins when using a different local or staging origin.
+
 ## Current status
 
-Day 1 established the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Day 2 adds a validated trip-preferences form. Day 3 adds typed itinerary and preference schemas plus a preferences-validation endpoint. Day 4 adds a deterministic demo draft endpoint; live LLM generation is blocked until `OPENAI_API_KEY` is configured. Day 5 adds a typed OpenAI Agents SDK tool boundary and a deterministic endpoint for generic activity prompts. Real place discovery, persistence, and deployment remain on the roadmap.
+Day 1 established the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Day 2 adds a validated trip-preferences form. Day 3 adds typed itinerary and preference schemas plus a preferences-validation endpoint. Day 4 adds a deterministic demo draft endpoint; live LLM generation is blocked until `OPENAI_API_KEY` is configured. Day 5 adds a typed OpenAI Agents SDK tool boundary and a deterministic endpoint for generic activity prompts. Day 6 connects the preferences form to the demo draft endpoint and displays its dated suggestions. Real place discovery, persistence, and deployment remain on the roadmap.
 
 ### Try the demo draft endpoint
 
@@ -52,3 +54,7 @@ Start the API with `cd apps/api && uv run --extra dev uvicorn app.main:app --rel
 ### Try the structured Agent tool fixture
 
 With the API running, submit `{"destination":"Montreal","interests":["Food","History"]}` to `POST /itineraries/activity-ideas` in `/docs`. The response includes typed prompts and `data_status: "not_retrieved"`; the endpoint uses no external services and does not claim specific places were verified. The SDK agent can be constructed without credentials, but running it through a live model requires `OPENAI_API_KEY`.
+
+### Try a demo itinerary in the web app
+
+The web form can also submit valid preferences to `POST /itineraries/generate` and render the returned draft by day. The visible demo label and notice explain that the suggestions contain no verified venue information.

@@ -94,7 +94,8 @@ export default function HomePage() {
           <h2 id="planner-title">Tell us about your trip.</h2>
           <p>
             Share your dates, budget, and interests. We will validate the setup
-            before connecting itinerary generation.
+            and create a starter draft. Real venue details are not connected
+            yet.
           </p>
         </div>
         <TripPreferencesForm />
