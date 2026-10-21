@@ -9,7 +9,7 @@ Each day is a goal, not a quota. Prefer one small, tested, reviewable increment.
 - [x] Day 3: Create FastAPI endpoints and structured itinerary schemas.
 - [ ] Day 4: Integrate LLM API and basic itinerary generation.
 - [x] Day 5: Add an Agent tool interface and structured tool outputs.
-- [ ] Day 6: Implement itinerary display components.
+- [x] Day 6: Implement itinerary display components.
 - [ ] Day 7: Integration tests, bug fixes, and first milestone review.
 
 ## Week 2 — Real-world data
@@ -57,3 +57,5 @@ Production deployment, billing changes, database-destructive operations, and cre
 Day 4 note: `OPENAI_API_KEY` is not configured in the development environment. The local implementation provides a deterministic demo endpoint for integration testing; live LLM generation remains blocked and Day 4 stays unchecked until the LLM provider is wired and exercised.
 
 Day 5 note: Added an OpenAI Agents SDK tool with generated input and Pydantic output schemas, plus a deterministic `/itineraries/activity-ideas` endpoint for local testing. It returns generic prompts only and explicitly marks place data as not retrieved. Constructing the agent and testing the tool require no API key; a live model run remains blocked until `OPENAI_API_KEY` is configured.
+
+Day 6 note: Connected the validated preferences form to the deterministic demo-generation endpoint and added a responsive, accessible day-by-day draft display. The UI labels the draft as unverified and shows the API notice; failed requests produce an explicit error instead of fabricated itinerary content. Configured exact-origin CORS for local web-to-API requests; set `CORS_ALLOWED_ORIGINS` for other web origins.
