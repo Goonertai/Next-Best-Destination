@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { generateDemoItinerary, type ItineraryDraft } from "../lib/api";
 import {
   TRAVEL_INTERESTS,
   TRAVEL_PACES,
@@ -9,6 +10,7 @@ import {
   type TravelPreferencesErrors,
   type TravelPreferencesInput,
 } from "../lib/preferences";
+import { ItineraryDisplay } from "./ItineraryDisplay";
 
 const initialValues: TravelPreferencesInput = {
   destination: "",
@@ -31,7 +33,9 @@ const paceLabels: Record<TravelPace, string> = {
 export function TripPreferencesForm() {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<TravelPreferencesErrors>({});
-  const [isValidated, setIsValidated] = useState(false);
+  const [itinerary, setItinerary] = useState<ItineraryDraft | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   function updateValue<Key extends keyof TravelPreferencesInput>(
     key: Key,
@@ -39,14 +43,31 @@ export function TripPreferencesForm() {
   ) {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
-    setIsValidated(false);
+    setItinerary(null);
+    setRequestError(null);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validateTravelPreferences(values);
     setErrors(nextErrors);
-    setIsValidated(Object.keys(nextErrors).length === 0);
+    setItinerary(null);
+    setRequestError(null);
+
+    if (Object.keys(nextErrors).length > 0) return;
+
+    setIsGenerating(true);
+    try {
+      setItinerary(await generateDemoItinerary(values));
+    } catch (error) {
+      setRequestError(
+        error instanceof Error
+          ? error.message
+          : "Could not generate the demo itinerary. Please try again.",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   return (
@@ -251,16 +272,26 @@ export function TripPreferencesForm() {
       </div>
 
       <div className="form-submit-row">
-        <button className="primary-button" type="submit">
-          Check trip details <span aria-hidden="true">→</span>
+        <button
+          className="primary-button"
+          type="submit"
+          disabled={isGenerating}
+        >
+          {isGenerating ? "Putting ideas together…" : "Generate a first draft"}
+          {!isGenerating && <span aria-hidden="true">→</span>}
         </button>
-        {isValidated && (
+        {isGenerating && (
           <p className="form-success" role="status">
-            Preferences validated. Itinerary generation is coming in a later
-            step.
+            Preparing generic ideas for your trip…
+          </p>
+        )}
+        {requestError && (
+          <p className="form-error" role="alert">
+            {requestError}
           </p>
         )}
       </div>
+      {itinerary && <ItineraryDisplay itinerary={itinerary} />}
     </form>
   );
 }
