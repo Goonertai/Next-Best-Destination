@@ -179,6 +179,43 @@ class RouteToolResult(BaseModel):
     notice: str
 
 
+class WeatherForecastRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    coordinates: GeoCoordinates
+    forecast_date: date
+
+
+class DailyWeatherForecast(BaseModel):
+    forecast_date: date
+    timezone: Annotated[str, Field(min_length=1, max_length=80)]
+    weather_code: Annotated[int, Field(ge=0, le=99)]
+    temperature_max_c: float
+    temperature_min_c: float
+    precipitation_probability_max_pct: Annotated[int, Field(ge=0, le=100)] | None = None
+    source: PlaceSource
+    data_status: PlaceDataStatus
+
+    @field_validator("temperature_max_c", "temperature_min_c")
+    @classmethod
+    def temperatures_must_be_finite(cls, value: float) -> float:
+        if not isfinite(value):
+            raise ValueError("temperatures must be finite numbers")
+        return value
+
+    @model_validator(mode="after")
+    def temperature_range_must_be_ordered(self) -> "DailyWeatherForecast":
+        if self.temperature_min_c > self.temperature_max_c:
+            raise ValueError("minimum temperature must not exceed maximum temperature")
+        return self
+
+
+class WeatherForecastResponse(BaseModel):
+    forecast: DailyWeatherForecast | None = None
+    data_status: PlaceDataStatus
+    notice: str
+
+
 class Estimate(BaseModel):
     """An explicitly uncertain numeric estimate, never a verified quote."""
 
