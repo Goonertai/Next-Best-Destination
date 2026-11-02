@@ -110,12 +110,26 @@ class PlaceRecord(BaseModel):
         return value
 
 
+class PlaceGroup(BaseModel):
+    """Places within a geographic radius of a representative result."""
+
+    area_id: Annotated[str, Field(pattern=r"^area-[1-9][0-9]*$")]
+    anchor_place_id: Annotated[str, Field(min_length=1, max_length=256)]
+    radius_meters: Annotated[int, Field(ge=0)]
+    places: Annotated[list[PlaceRecord], Field(min_length=1)]
+
+
 class PlaceSearchResponse(BaseModel):
     destination: str
     category: PlaceCategory
     results: list[PlaceRecord]
+    groups: list[PlaceGroup]
     data_status: PlaceDataStatus
     notice: str
+    grouping_notice: str = (
+        "Nearby places are grouped by straight-line distance; groups are not driving "
+        "directions or travel-time estimates."
+    )
 
 
 class PlaceValidationRequest(BaseModel):

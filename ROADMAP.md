@@ -18,7 +18,7 @@ Each day is a goal, not a quota. Prefer one small, tested, reviewable increment.
 - [x] Day 9: Build attraction discovery tools.
 - [x] Day 10: Add restaurants and location validation.
 - [x] Day 11: Integrate routing and travel-time estimates.
-- [ ] Day 12: Implement geographic grouping.
+- [x] Day 12: Implement geographic grouping.
 - [ ] Day 13: Add weather lookup and fallback handling.
 - [ ] Day 14: End-to-end tests and real-data itinerary demo.
 
@@ -61,3 +61,5 @@ Day 5 note: Added an OpenAI Agents SDK tool with generated input and Pydantic ou
 Day 6 note: Connected the validated preferences form to the deterministic demo-generation endpoint and added a responsive, accessible day-by-day draft display. The UI labels the draft as unverified and shows the API notice; failed requests produce an explicit error instead of fabricated itinerary content. Configured exact-origin CORS for local web-to-API requests; set `CORS_ALLOWED_ORIGINS` for other web origins.
 
 Days 7–11 note: Added API integration coverage for draft generation, sourced place discovery, place-ID/coordinate validation, and route estimation. Implemented server-side Google Places API (New) text search and details, attraction and restaurant endpoints, matching structured Agents SDK tools, and Google Routes API Compute Routes estimates. Map responses retain source URLs and retrieval timestamps; durations are labeled as estimates. `GOOGLE_MAPS_API_KEY` is not configured, so live Google requests have not been exercised. Missing credentials return an explicit unavailable response; synthetic fixtures are confined to tests and labeled as mock data.
+
+Day 12 note: Place search responses now group results into stable areas using a 1,500-meter straight-line radius from each area's first result. Each place appears once, groups retain provider metadata, and the response explicitly says area grouping is not routing or a travel-time estimate. Deterministic tests cover nearby, distant, anchor-radius, and empty-result behavior. Live Places results remain blocked by missing `GOOGLE_MAPS_API_KEY`.

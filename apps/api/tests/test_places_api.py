@@ -22,6 +22,9 @@ def test_attraction_discovery_marks_fixture_results_as_mock() -> None:
     assert body["data_status"] == PlaceDataStatus.MOCK.value
     assert "No real place data" in body["notice"]
     assert body["results"][0]["place_id"] == "mock-place-1"
+    assert body["groups"][0]["area_id"] == "area-1"
+    assert body["groups"][0]["anchor_place_id"] == "mock-place-1"
+    assert "straight-line distance" in body["grouping_notice"]
     assert provider.queries == [("tourist attractions in Fixture City", 10)]
 
 
