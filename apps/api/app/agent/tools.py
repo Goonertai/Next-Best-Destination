@@ -5,6 +5,12 @@ from typing import Annotated, Literal
 from agents import Agent, FunctionTool, function_tool
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.agent.maps_tools import (
+    create_place_search_tool,
+    create_place_validation_tool,
+    create_route_estimate_tool,
+)
+
 
 class ActivityIdeasRequest(BaseModel):
     """Inputs for generic interest prompts; not a real place search."""
@@ -87,5 +93,11 @@ def build_travel_agent() -> Agent:
             "that a venue, price, opening hour, availability, weather, or travel time was verified "
             "unless a dedicated data tool returns source information. Label estimates clearly."
         ),
-        tools=[create_activity_ideas_tool()],
+        tools=[
+            create_activity_ideas_tool(),
+            create_place_search_tool("attractions"),
+            create_place_search_tool("restaurants"),
+            create_place_validation_tool(),
+            create_route_estimate_tool(),
+        ],
     )

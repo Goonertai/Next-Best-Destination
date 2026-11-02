@@ -14,7 +14,7 @@ Travelers provide a destination, travel dates, total budget and currency, group 
 - API: Python, FastAPI, Pydantic
 - Agent: OpenAI Agents SDK behind an orchestration boundary
 - Storage: PostgreSQL, accessed through repository interfaces
-- External data: Google Maps Platform and a weather provider, isolated behind provider interfaces
+- External data: Google Places API (New), Google Routes API, and a weather provider, isolated behind provider interfaces
 - Quality: pytest, Vitest, Playwright, evaluation scenarios, GitHub Actions
 - Deployment targets: Vercel for web; Render or Railway for API and PostgreSQL
 - Operations: structured logs, agent traces, latency and token-cost metrics
@@ -29,6 +29,7 @@ Travelers provide a destination, travel dates, total budget and currency, group 
 - Do not present estimated costs or durations as verified facts.
 - Validate place IDs and coordinates before an item is marked verified.
 - Handle provider timeouts, errors, and missing credentials with explicit user-facing status.
+- Keep Google Maps credentials on the API server; do not send them to the browser.
 - Never log secrets or unnecessary personal data; never commit credentials.
 - Production deployment, billing changes, credential changes, and destructive database operations require owner approval.
 

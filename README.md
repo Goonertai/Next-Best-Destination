@@ -41,11 +41,13 @@ Each daily run produces tested local changes and a review packet with a diff, te
 
 Copy `.env.example` to `.env` when integrations are introduced. Do not commit secrets. No external API credentials are required for the Day 1 health check.
 
+Google Places and Routes requests are made by the API server. Set `GOOGLE_MAPS_API_KEY` in the API environment to enable live lookups; keep it server-side and never use a `NEXT_PUBLIC_` prefix. The Google Cloud project must have Places API (New) and Routes API enabled. Without the key, map endpoints return `503` and do not fall back to sample places. No live Google request was made during development because credentials were not configured.
+
 For local web-to-API requests, the API allows `http://localhost:3000` by default. Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of exact web app origins when using a different local or staging origin.
 
 ## Current status
 
-Day 1 established the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Day 2 adds a validated trip-preferences form. Day 3 adds typed itinerary and preference schemas plus a preferences-validation endpoint. Day 4 adds a deterministic demo draft endpoint; live LLM generation is blocked until `OPENAI_API_KEY` is configured. Day 5 adds a typed OpenAI Agents SDK tool boundary and a deterministic endpoint for generic activity prompts. Day 6 connects the preferences form to the demo draft endpoint and displays its dated suggestions. Real place discovery, persistence, and deployment remain on the roadmap.
+Day 1 established the monorepo, development scripts, FastAPI health endpoint, and Next.js landing page. Day 2 adds a validated trip-preferences form. Day 3 adds typed itinerary and preference schemas plus a preferences-validation endpoint. Day 4 adds a deterministic demo draft endpoint; live LLM generation is blocked until `OPENAI_API_KEY` is configured. Day 5 adds a typed OpenAI Agents SDK tool boundary and a deterministic endpoint for generic activity prompts. Day 6 connects the preferences form to the demo draft endpoint and displays its dated suggestions. Days 7–11 add integration tests, Google Places discovery and validation, and route-time estimates. Real external calls remain untested without `GOOGLE_MAPS_API_KEY`; persistence, geographic grouping, weather, and deployment remain on the roadmap.
 
 ### Try the demo draft endpoint
 
@@ -58,3 +60,9 @@ With the API running, submit `{"destination":"Montreal","interests":["Food","His
 ### Try a demo itinerary in the web app
 
 The web form can also submit valid preferences to `POST /itineraries/generate` and render the returned draft by day. The visible demo label and notice explain that the suggestions contain no verified venue information.
+
+### Discover real places and estimate routes
+
+With `GOOGLE_MAPS_API_KEY` configured for the API, use `GET /places/attractions?destination=Montreal` or `GET /places/restaurants?destination=Montreal`. Each result includes the Google Place ID, coordinates, a Maps URL, and provider retrieval time. `POST /places/validate` checks an ID with Place Details and compares the supplied coordinates with the provider location using a 100-meter tolerance. `POST /routes/estimate` calls Routes API Compute Routes and returns duration and distance as an estimate with its source.
+
+The matching Agents SDK tools are registered for attraction search, restaurant search, place validation, and route estimation. They return explicit unavailable results when the API key is missing. Automated tests use clearly labeled synthetic fixtures and mocked HTTP responses; they never contact paid APIs or present fixture locations as real.

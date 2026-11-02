@@ -3,9 +3,12 @@
 from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
+from math import isfinite
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+PlaceCategory = Literal["attractions", "restaurants"]
 
 
 class TravelPace(StrEnum):
@@ -64,6 +67,102 @@ class PlaceReference(BaseModel):
     latitude: Annotated[float, Field(ge=-90, le=90)]
     longitude: Annotated[float, Field(ge=-180, le=180)]
     source: PlaceSource
+
+
+class PlaceDataStatus(StrEnum):
+    LIVE = "live"
+    MOCK = "mock"
+    UNAVAILABLE = "unavailable"
+
+
+class GeoCoordinates(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    latitude: Annotated[float, Field(ge=-90, le=90)]
+    longitude: Annotated[float, Field(ge=-180, le=180)]
+
+    @field_validator("latitude", "longitude")
+    @classmethod
+    def coordinates_must_be_finite(cls, value: float) -> float:
+        if not isfinite(value):
+            raise ValueError("coordinates must be finite numbers")
+        return value
+
+
+class PlaceRecord(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    name: Annotated[str, Field(min_length=1, max_length=200)]
+    place_id: Annotated[str, Field(min_length=1, max_length=256)]
+    latitude: Annotated[float, Field(ge=-90, le=90)]
+    longitude: Annotated[float, Field(ge=-180, le=180)]
+    formatted_address: Annotated[str, Field(max_length=500)] | None = None
+    primary_type: Annotated[str, Field(max_length=100)] | None = None
+    google_maps_uri: Annotated[str, Field(max_length=2048)] | None = None
+    source: PlaceSource
+    data_status: PlaceDataStatus
+
+    @field_validator("latitude", "longitude")
+    @classmethod
+    def coordinates_must_be_finite(cls, value: float) -> float:
+        if not isfinite(value):
+            raise ValueError("coordinates must be finite numbers")
+        return value
+
+
+class PlaceSearchResponse(BaseModel):
+    destination: str
+    category: PlaceCategory
+    results: list[PlaceRecord]
+    data_status: PlaceDataStatus
+    notice: str
+
+
+class PlaceValidationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    place_id: Annotated[str, Field(min_length=1, max_length=256)]
+    coordinates: GeoCoordinates
+
+
+class PlaceValidationResponse(BaseModel):
+    is_valid: bool
+    place: PlaceRecord | None = None
+    distance_meters: Annotated[float, Field(ge=0)] | None = None
+    match_tolerance_meters: int = 100
+    data_status: PlaceDataStatus
+    notice: str
+
+
+class RouteMode(StrEnum):
+    DRIVE = "DRIVE"
+    WALK = "WALK"
+    BICYCLE = "BICYCLE"
+    TRANSIT = "TRANSIT"
+
+
+class RouteEstimateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    origin: GeoCoordinates
+    destination: GeoCoordinates
+    mode: RouteMode = RouteMode.DRIVE
+
+
+class RouteEstimate(BaseModel):
+    duration_minutes: Annotated[int, Field(ge=1, le=1440)]
+    distance_meters: Annotated[int, Field(ge=0)]
+    mode: RouteMode
+    is_estimate: Literal[True] = True
+    source: PlaceSource
+    data_status: PlaceDataStatus
+    notice: str = "Route duration is an estimate and can change with current conditions."
+
+
+class RouteToolResult(BaseModel):
+    estimate: RouteEstimate | None = None
+    data_status: PlaceDataStatus
+    notice: str
 
 
 class Estimate(BaseModel):

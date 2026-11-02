@@ -60,7 +60,18 @@ def test_travel_agent_registers_the_tool_without_running_a_model() -> None:
     agent = build_travel_agent()
 
     assert agent.name == "Travel Planning Assistant"
-    assert [tool.name for tool in agent.tools] == ["suggest_activity_ideas"]
+    assert [tool.name for tool in agent.tools] == [
+        "suggest_activity_ideas",
+        "search_attractions",
+        "search_restaurants",
+        "validate_place_reference",
+        "estimate_route",
+    ]
+    assert all(isinstance(tool, FunctionTool) for tool in agent.tools)
+    assert agent.tools[1].output_json_schema is not None
+    assert "data_status" in agent.tools[1].output_json_schema["properties"]
+    assert agent.tools[4].output_json_schema is not None
+    assert "estimate" in agent.tools[4].output_json_schema["properties"]
 
 
 def test_activity_ideas_endpoint_returns_structured_non_verified_data() -> None:
