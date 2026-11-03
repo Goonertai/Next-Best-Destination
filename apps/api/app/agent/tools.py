@@ -10,6 +10,7 @@ from app.agent.maps_tools import (
     create_place_validation_tool,
     create_route_estimate_tool,
 )
+from app.agent.weather_tools import create_weather_forecast_tool
 
 
 class ActivityIdeasRequest(BaseModel):
@@ -99,5 +100,6 @@ def build_travel_agent() -> Agent:
             create_place_search_tool("restaurants"),
             create_place_validation_tool(),
             create_route_estimate_tool(),
+            create_weather_forecast_tool(),
         ],
     )

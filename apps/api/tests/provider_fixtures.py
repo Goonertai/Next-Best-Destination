@@ -3,12 +3,15 @@
 from datetime import UTC, datetime
 
 from app.domain.schemas import (
+    DailyWeatherForecast,
     PlaceDataStatus,
     PlaceRecord,
     PlaceSource,
     RouteEstimate,
     RouteEstimateRequest,
+    WeatherForecastRequest,
 )
+from app.providers.errors import ProviderRequestError
 
 
 def mock_place(place_id: str = "mock-place-1") -> PlaceRecord:
@@ -56,3 +59,26 @@ class MockRoutesProvider:
             data_status=PlaceDataStatus.MOCK,
             notice="Synthetic route fixture only; not a real travel-time estimate.",
         )
+
+
+class MockWeatherProvider:
+    data_status = PlaceDataStatus.MOCK
+
+    def get_daily_forecast(self, request: WeatherForecastRequest) -> DailyWeatherForecast:
+        return DailyWeatherForecast(
+            forecast_date=request.forecast_date,
+            timezone="Fixture/Zone",
+            weather_code=3,
+            temperature_max_c=14.0,
+            temperature_min_c=7.0,
+            precipitation_probability_max_pct=20,
+            source=mock_place().source,
+            data_status=PlaceDataStatus.MOCK,
+        )
+
+
+class UnavailableWeatherProvider:
+    data_status = PlaceDataStatus.UNAVAILABLE
+
+    def get_daily_forecast(self, request: WeatherForecastRequest) -> DailyWeatherForecast:
+        raise ProviderRequestError("synthetic upstream failure")

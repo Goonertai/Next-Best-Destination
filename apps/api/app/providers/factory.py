@@ -5,6 +5,7 @@ import os
 from app.providers.errors import ProviderNotConfiguredError
 from app.providers.places import GooglePlacesProvider
 from app.providers.routes import GoogleRoutesProvider
+from app.providers.weather import OpenMeteoWeatherProvider
 
 
 def _google_maps_api_key() -> str:
@@ -22,3 +23,7 @@ def get_places_provider() -> GooglePlacesProvider:
 
 def get_routes_provider() -> GoogleRoutesProvider:
     return GoogleRoutesProvider(_google_maps_api_key())
+
+
+def get_weather_provider() -> OpenMeteoWeatherProvider:
+    return OpenMeteoWeatherProvider()
