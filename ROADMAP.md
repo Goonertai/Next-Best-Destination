@@ -25,7 +25,7 @@ Each day is a goal, not a quota. Prefer one small, tested, reviewable increment.
 ## Week 3 — Agent workflows
 
 - [ ] Day 15: Create database schema and itinerary persistence.
-- [ ] Day 16: Add itinerary history and retrieval.
+- [x] Day 16: Add itinerary history and retrieval.
 - [ ] Day 17: Add conversational editing for an existing itinerary.
 - [ ] Day 18: Implement partial-day itinerary regeneration.
 - [ ] Day 19: Add budget estimates and constraint validation.
@@ -65,3 +65,11 @@ Days 7–11 note: Added API integration coverage for draft generation, sourced p
 Day 12 note: Place search responses now group results into stable areas using a 1,500-meter straight-line radius from each area's first result. Each place appears once, groups retain provider metadata, and the response explicitly says area grouping is not routing or a travel-time estimate. Deterministic tests cover nearby, distant, anchor-radius, and empty-result behavior. Live Places results remain blocked by missing `GOOGLE_MAPS_API_KEY`.
 
 Day 13 note: Added the Open-Meteo daily forecast provider, `POST /weather/forecast`, and an Agents SDK weather tool. Forecasts include provider source/retrieval metadata, weather code, local timezone, daily high/low, and maximum precipitation probability. Provider errors or dates without forecast data produce an explicit unavailable response with no substitute weather values. Tests use mocked HTTP responses and synthetic fixtures; no live request was made. The public free endpoint is limited to non-commercial use and Open-Meteo attribution is required; confirm terms before a commercial deployment.
+
+Day 14 note: Added `POST /itineraries/plan` to compose place discovery, Place Details validation, geographic grouping, route estimates, and daily weather into a structured itinerary. The web form now renders a multi-day plan and clearly labels sample fixtures as fictional. Live mode uses the existing Google and Open-Meteo providers without falling back to fixtures. Deterministic API coverage exercises the full sample workflow. Day 14 remains unchecked until the live-data itinerary path is exercised with owner-provided Google credentials; no live provider request was made.
+
+Day 15 note: Added a SQLAlchemy persistence repository and an itinerary table. Local development uses SQLite; `DATABASE_URL` selects PostgreSQL through psycopg. Tests verify persistence and snapshot round-trips using temporary SQLite databases. A PostgreSQL server was not configured here, so the PostgreSQL connection path remains unverified and Day 15 stays unchecked.
+
+Day 16 note: Added saved-trip history, retrieval by ID, and an open action in the web UI. Share links open unlisted, immutable itinerary snapshots. Saving an edit creates a new snapshot rather than overwriting the prior link. API tests cover save/list/open and not-found behavior.
+
+Day 17 note: Added constrained natural-language remove/move editing for existing activities. Without `OPENAI_API_KEY`, sample mode accepts explicit remove/move commands. When configured, the OpenAI Agents SDK editor calls a tool to inspect existing activities and may only return a command for an existing place ID. Edits clear weather and route estimates for changed days so stale estimates are not shown. The live model path has not been exercised, so Day 17 remains unchecked.

@@ -42,7 +42,15 @@ class TravelPreferences(BaseModel):
     def dates_must_be_ordered(self) -> "TravelPreferences":
         if self.end_date <= self.start_date:
             raise ValueError("end_date must be after start_date")
+        if (self.end_date - self.start_date).days > 30:
+            raise ValueError("trips cannot exceed 30 days")
         return self
+
+
+class ItineraryPlanRequest(TravelPreferences):
+    """Trip preferences plus an explicit live-data or sample-data mode."""
+
+    data_mode: Literal["demo", "live"] = "demo"
 
 
 class PreferencesValidationResponse(BaseModel):
@@ -254,6 +262,8 @@ class Activity(BaseModel):
     category: Annotated[str, Field(min_length=1, max_length=40)]
     place: PlaceReference
     description: Annotated[str, Field(min_length=1, max_length=1000)]
+    place_is_verified: bool
+    data_status: PlaceDataStatus
     estimated_cost: Estimate | None = None
     travel_from_previous: TravelTimeEstimate | None = None
 
@@ -267,6 +277,8 @@ class Activity(BaseModel):
 class ItineraryDay(BaseModel):
     date: date
     activities: list[Activity]
+    weather: DailyWeatherForecast | None = None
+    area_id: str | None = None
 
 
 class Itinerary(BaseModel):
@@ -276,6 +288,10 @@ class Itinerary(BaseModel):
     days: list[ItineraryDay]
     total_estimated_cost: Estimate | None = None
     generated_at: datetime
+    generation_mode: Literal["demo", "live"]
+    data_status: PlaceDataStatus
+    notice: str
+    warnings: list[str] = Field(default_factory=list)
 
 
 class ItineraryDraftDay(BaseModel):
