@@ -11,12 +11,13 @@ const steps = [
     number: "02",
     title: "Explore with context",
     detail:
-      "Places and routes will include sources, so you can check the details.",
+      "Live place listings include source links; travel times are clearly marked estimates.",
   },
   {
     number: "03",
     title: "Make it yours",
-    detail: "Ask for a change and refine your itinerary as you go.",
+    detail:
+      "Review each day, its nearby area, source links, and forecast details.",
   },
 ];
 
@@ -93,9 +94,8 @@ export default function HomePage() {
           <p className="eyebrow">START WITH THE DETAILS</p>
           <h2 id="planner-title">Tell us about your trip.</h2>
           <p>
-            Share your dates, budget, and interests. We will validate the setup
-            and create a starter draft. Real venue details are not connected
-            yet.
+            Share your dates, budget, and interests. Generate a labeled sample
+            plan or use live place listings when the API key is configured.
           </p>
         </div>
         <TripPreferencesForm />

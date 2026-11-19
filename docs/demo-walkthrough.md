@@ -1,34 +1,55 @@
-# Local demo walkthrough
+# Local POC walkthrough
 
-This walkthrough shows the current draft UI and the sourced travel-data APIs. The generated draft is still generic: it does not yet consume place, route, or weather results to construct its suggestions. Keep that distinction visible during a demo.
+The local POC runs without external credentials in sample mode. Sample places, coordinates, route durations, and weather values are fictional fixtures, marked as mock, and must not be used to make real travel decisions.
 
-## Start the app
+## Start the apps
 
-In one terminal, start the API:
+In terminal 1:
 
 ```bash
 cd apps/api
-uv run --extra dev uvicorn app.main:app --reload
+uv sync --extra dev
+uv run uvicorn app.main:app --reload
 ```
 
-For live place lookups, set `GOOGLE_MAPS_API_KEY` in the API server environment before starting it. Enable Places API (New) and Routes API in the associated Google Cloud project. Keep the key server-side; do not use a `NEXT_PUBLIC_` variable.
-
-In a second terminal, start the web app:
+In terminal 2, from the repository root:
 
 ```bash
+pnpm install
 pnpm dev:web
 ```
 
-## Walk through the draft and sourced data
+Open `http://localhost:3000`. Saved sample itineraries are stored in `apps/api/data/itineraries.db` by default.
 
-1. Open `http://localhost:3000`, enter a destination, dates, budget, travelers, at least one interest, and a pace, then submit. The result is labeled `Demo · not verified`; it contains generic prompts and no verified venues.
-2. Open `http://localhost:8000/docs` and call `GET /places/attractions` and `GET /places/restaurants`. Live results include provider IDs, coordinates, source links, retrieval times, and nearby-area grouping. If the Google key is missing, these endpoints return `503` and do not substitute fixtures.
-3. Copy a returned place ID and coordinates into `POST /places/validate`. A matching provider record within 100 meters is returned with its validation status.
-4. Use two returned coordinates with `POST /routes/estimate`. The duration is an estimate and includes its source.
-5. Use one returned coordinate and a travel date with `POST /weather/forecast`. The result includes a source and retrieval time. If a forecast is unavailable, the response says so and contains no forecast values.
+## Try a complete sample itinerary
 
-The API test suite uses clearly labeled mock providers to exercise this flow without network calls. It verifies that the generated draft remains marked unverified and that places, routes, and weather retain `data_status: "mock"`. These fixtures are test data only and must not be shown as real travel recommendations.
+1. Enter a destination, dates, total budget, travelers, interests, and pace.
+2. Choose **Sample demo data (fictional)** and click **Generate itinerary**.
+3. Confirm the result is labeled **Sample data · fictional**. Each day shows fictional sample places, a nearby-area label, a sample route estimate, and sample weather with source labels. The cost line says it is unavailable from the current sources.
+4. In **Ask to change this plan**, try `remove Sample attraction 1 (fictional)` or `move Sample attraction 2 (fictional) to day 2`. In sample mode without an OpenAI key, only unambiguous remove/move commands for existing activities are accepted. Unsupported requests return an explanation and leave the plan unchanged.
+5. Click **Save itinerary**. The saved trip appears under **Saved trips**. Refresh the page and open it again.
+6. Click **Copy share link** and open the copied URL in a new tab. Anyone with the unlisted link can view that saved snapshot. Edits create an unsaved copy; save again to get a new immutable snapshot and share link.
 
-## Current live-demo blocker
+## Try live provider data
 
-`GOOGLE_MAPS_API_KEY` is not configured in the development environment, so live place and routing requests have not been demonstrated. Open-Meteo live requests were also not exercised. The walk-through describes how to run them once the relevant external access is configured; it does not claim the live data path has been verified.
+Set `GOOGLE_MAPS_API_KEY` in the API server's environment before starting it. The associated Google Cloud project must have Places API (New) and Routes API enabled. Keep the key server-side.
+
+Choose **Live Google places** in the form. The API searches attraction and restaurant listings using the selected interests and preferences, validates each scheduled place ID and coordinate against Place Details, groups results by nearby area, and requests route estimates between activities. Forecasts come from Open-Meteo. The UI links each listing and forecast to its source. Route durations are explicitly marked as estimates.
+
+If the Google key is absent or the provider request fails, the live request returns an explicit error and does not substitute sample venues. Open `http://localhost:8000/docs` to inspect the individual discovery, validation, routing, and weather endpoints.
+
+## Try Agents SDK edit interpretation
+
+Set `OPENAI_API_KEY` in the API server environment. The edit agent uses a tool to read the current activity IDs and is instructed to only remove or move existing activities. It cannot create a venue, price, opening hour, route, or weather fact. Without this key, the sample mode uses the constrained rule-based remove/move commands above.
+
+## Configure PostgreSQL
+
+Local development uses SQLite unless `DATABASE_URL` is set. To use PostgreSQL, set a server-side value such as `postgresql://user:password@localhost:5432/travel_agent` before starting the API. The POC creates its table with SQLAlchemy metadata on first use; schema migrations are not set up yet.
+
+## POC limits
+
+- The OpenAI and Google live paths require owner-provided credentials and were not exercised during development.
+- Sample mode is only for testing the interface and workflows. Its fictional data is not real travel information.
+- No current prices or opening hours are provided; the app says when price data is unavailable.
+- This POC has no sign-in. Saved-trip history is shared by the configured database, and anyone with an itinerary link can view that snapshot. Keep it local/private until authentication and per-user access controls are added.
+- Do not deploy it as a public travel service yet.

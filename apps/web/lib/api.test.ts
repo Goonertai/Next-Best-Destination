@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { generateDemoItinerary, getApiHealth } from "./api";
+import { generateItinerary, getApiHealth } from "./api";
 
 describe("getApiHealth", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -27,40 +27,47 @@ describe("getApiHealth", () => {
   });
 });
 
-describe("generateDemoItinerary", () => {
+describe("generateItinerary", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("posts validated trip preferences and returns the dated draft", async () => {
-    const draft = {
+  it("posts trip preferences and the selected data mode", async () => {
+    const itinerary = {
+      id: null,
       destination: "Montreal",
+      currency: "CAD",
       generation_mode: "demo" as const,
-      is_complete_itinerary: false as const,
-      uses_verified_place_data: false as const,
-      notice: "No places have been checked.",
-      days: [{ date: "2026-11-07", suggestions: ["Explore local history."] }],
+      data_status: "mock" as const,
+      notice: "Sample data only.",
+      warnings: [],
+      total_estimated_cost: null,
+      generated_at: "2026-11-07T12:00:00Z",
+      days: [],
     };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => draft,
+      json: async () => itinerary,
     });
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      generateDemoItinerary({
-        destination: "Montreal",
-        startDate: "2026-11-07",
-        endDate: "2026-11-08",
-        totalBudget: "1500",
-        currency: "CAD",
-        travelers: "2",
-        interests: ["History"],
-        preferences: "",
-        pace: "relaxed",
-      }),
-    ).resolves.toEqual(draft);
+      generateItinerary(
+        {
+          destination: "Montreal",
+          startDate: "2026-11-07",
+          endDate: "2026-11-08",
+          totalBudget: "1500",
+          currency: "CAD",
+          travelers: "2",
+          interests: ["History"],
+          preferences: "",
+          pace: "relaxed",
+        },
+        "demo",
+      ),
+    ).resolves.toEqual(itinerary);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8000/itineraries/generate",
+      "http://localhost:8000/itineraries/plan",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,6 +81,7 @@ describe("generateDemoItinerary", () => {
           interests: ["History"],
           preferences: "",
           pace: "relaxed",
+          data_mode: "demo",
         }),
         cache: "no-store",
       }),
@@ -83,21 +91,56 @@ describe("generateDemoItinerary", () => {
   it("returns a useful error when the API rejects the request", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({ ok: false, status: 422 }),
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: async () => ({}),
+      }),
     );
 
     await expect(
-      generateDemoItinerary({
-        destination: "Montreal",
-        startDate: "2026-11-07",
-        endDate: "2026-11-08",
-        totalBudget: "1500",
-        currency: "CAD",
-        travelers: "2",
-        interests: ["History"],
-        preferences: "",
-        pace: "relaxed",
-      }),
+      generateItinerary(
+        {
+          destination: "Montreal",
+          startDate: "2026-11-07",
+          endDate: "2026-11-08",
+          totalBudget: "1500",
+          currency: "CAD",
+          travelers: "2",
+          interests: ["History"],
+          preferences: "",
+          pace: "relaxed",
+        },
+        "live",
+      ),
     ).rejects.toThrow("Itinerary request failed: 422");
+  });
+
+  it("shows the provider setup detail for unavailable live mode", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({ detail: "Configure GOOGLE_MAPS_API_KEY." }),
+      }),
+    );
+
+    await expect(
+      generateItinerary(
+        {
+          destination: "Montreal",
+          startDate: "2026-11-07",
+          endDate: "2026-11-08",
+          totalBudget: "1500",
+          currency: "CAD",
+          travelers: "2",
+          interests: ["History"],
+          preferences: "",
+          pace: "relaxed",
+        },
+        "live",
+      ),
+    ).rejects.toThrow("Configure GOOGLE_MAPS_API_KEY.");
   });
 });

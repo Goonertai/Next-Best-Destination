@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { generateDemoItinerary, type ItineraryDraft } from "../lib/api";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  editItinerary,
+  generateItinerary,
+  getSavedItinerary,
+  listSavedItineraries,
+  saveItinerary,
+  type Itinerary,
+} from "../lib/api";
 import {
   TRAVEL_INTERESTS,
   TRAVEL_PACES,
@@ -32,10 +39,62 @@ const paceLabels: Record<TravelPace, string> = {
 
 export function TripPreferencesForm() {
   const [values, setValues] = useState(initialValues);
+  const [dataMode, setDataMode] = useState<"demo" | "live">("demo");
   const [errors, setErrors] = useState<TravelPreferencesErrors>({});
-  const [itinerary, setItinerary] = useState<ItineraryDraft | null>(null);
+  const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedItineraries, setSavedItineraries] = useState<Itinerary[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [editInstruction, setEditInstruction] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const sharedId = new URLSearchParams(window.location.search).get(
+      "itinerary",
+    );
+    if (sharedId) {
+      getSavedItinerary(sharedId)
+        .then((saved) => {
+          if (active) {
+            setItinerary(saved);
+            setSaveNotice("Shared itinerary opened.");
+          }
+        })
+        .catch((error: unknown) => {
+          if (active) {
+            setRequestError(
+              error instanceof Error
+                ? error.message
+                : "Could not open shared itinerary.",
+            );
+          }
+        });
+    }
+    listSavedItineraries()
+      .then((saved) => {
+        if (active) setSavedItineraries(saved);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setRequestError(
+            error instanceof Error
+              ? error.message
+              : "Saved trips are unavailable.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setHistoryLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function updateValue<Key extends keyof TravelPreferencesInput>(
     key: Key,
@@ -45,6 +104,7 @@ export function TripPreferencesForm() {
     setErrors((current) => ({ ...current, [key]: undefined }));
     setItinerary(null);
     setRequestError(null);
+    setSaveNotice(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -58,7 +118,8 @@ export function TripPreferencesForm() {
 
     setIsGenerating(true);
     try {
-      setItinerary(await generateDemoItinerary(values));
+      setItinerary(await generateItinerary(values, dataMode));
+      setSaveNotice(null);
     } catch (error) {
       setRequestError(
         error instanceof Error
@@ -67,6 +128,78 @@ export function TripPreferencesForm() {
       );
     } finally {
       setIsGenerating(false);
+    }
+  }
+
+  async function handleSaveItinerary() {
+    if (!itinerary) return;
+    setIsSaving(true);
+    setRequestError(null);
+    try {
+      const saved = await saveItinerary(itinerary);
+      setItinerary(saved);
+      setSavedItineraries((current) => [
+        saved,
+        ...current.filter((item) => item.id !== saved.id),
+      ]);
+      setSaveNotice("Itinerary saved. You can reopen it from Saved trips.");
+      setShareNotice(null);
+    } catch (error) {
+      setRequestError(
+        error instanceof Error ? error.message : "Could not save itinerary.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleCopyShareLink() {
+    if (!itinerary?.id) return;
+    const shareUrl = new URL(window.location.href);
+    shareUrl.search = new URLSearchParams({
+      itinerary: itinerary.id,
+    }).toString();
+    try {
+      await navigator.clipboard.writeText(shareUrl.toString());
+      setShareNotice(
+        "Share link copied. Anyone with this link can view this saved snapshot.",
+      );
+    } catch {
+      setShareNotice(shareUrl.toString());
+    }
+  }
+
+  async function handleOpenSaved(id: string) {
+    setRequestError(null);
+    try {
+      setItinerary(await getSavedItinerary(id));
+      setSaveNotice("Saved itinerary opened.");
+    } catch (error) {
+      setRequestError(
+        error instanceof Error
+          ? error.message
+          : "Could not open saved itinerary.",
+      );
+    }
+  }
+
+  async function handleEditItinerary() {
+    if (!itinerary || !editInstruction.trim()) return;
+    setIsEditing(true);
+    setRequestError(null);
+    try {
+      const result = await editItinerary(itinerary, editInstruction);
+      setItinerary(result.itinerary);
+      setEditInstruction("");
+      setSaveNotice(
+        `${result.summary} ${result.edit_mode === "agents_sdk" ? "Updated with the AI editor." : "Applied with the sample command editor."}`,
+      );
+    } catch (error) {
+      setRequestError(
+        error instanceof Error ? error.message : "Could not edit itinerary.",
+      );
+    } finally {
+      setIsEditing(false);
     }
   }
 
@@ -201,6 +334,26 @@ export function TripPreferencesForm() {
             </p>
           )}
         </div>
+
+        <div className="form-field">
+          <label htmlFor="data-mode">Planning data</label>
+          <select
+            id="data-mode"
+            value={dataMode}
+            onChange={(event) => {
+              setDataMode(event.target.value as "demo" | "live");
+              setItinerary(null);
+              setRequestError(null);
+            }}
+          >
+            <option value="demo">Sample demo data (fictional)</option>
+            <option value="live">Live Google places</option>
+          </select>
+          <p className="form-hint">
+            Live mode requires a server-side Google Maps API key. Sample data is
+            synthetic and not for travel decisions.
+          </p>
+        </div>
       </div>
 
       <fieldset className="form-fieldset">
@@ -277,12 +430,12 @@ export function TripPreferencesForm() {
           type="submit"
           disabled={isGenerating}
         >
-          {isGenerating ? "Putting ideas together…" : "Generate a first draft"}
+          {isGenerating ? "Planning your days…" : "Generate itinerary"}
           {!isGenerating && <span aria-hidden="true">→</span>}
         </button>
         {isGenerating && (
           <p className="form-success" role="status">
-            Preparing generic ideas for your trip…
+            Searching places and organizing your days…
           </p>
         )}
         {requestError && (
@@ -291,7 +444,94 @@ export function TripPreferencesForm() {
           </p>
         )}
       </div>
-      {itinerary && <ItineraryDisplay itinerary={itinerary} />}
+      {itinerary && (
+        <div className="itinerary-result">
+          <ItineraryDisplay itinerary={itinerary} />
+          <div className="itinerary-edit">
+            <label htmlFor="edit-instruction">Ask to change this plan</label>
+            <textarea
+              id="edit-instruction"
+              value={editInstruction}
+              onChange={(event) => setEditInstruction(event.target.value)}
+              placeholder="For example: move Sample attraction 1 (fictional) to day 2"
+              rows={2}
+            />
+            <p>
+              With OPENAI_API_KEY, the Agents SDK can interpret requests.
+              Without it, sample mode supports removing or moving an existing
+              activity.
+            </p>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={handleEditItinerary}
+              disabled={isEditing || !editInstruction.trim()}
+            >
+              {isEditing ? "Updating plan…" : "Apply edit"}
+            </button>
+          </div>
+          <div className="itinerary-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={handleSaveItinerary}
+              disabled={isSaving}
+            >
+              {isSaving
+                ? "Saving…"
+                : itinerary.id
+                  ? "Save new version"
+                  : "Save itinerary"}
+            </button>
+            <button
+              className="text-button"
+              type="button"
+              disabled={!itinerary.id}
+              onClick={handleCopyShareLink}
+            >
+              Copy share link
+            </button>
+            {saveNotice && <p role="status">{saveNotice}</p>}
+            {shareNotice && <p role="status">{shareNotice}</p>}
+          </div>
+        </div>
+      )}
+      <section className="saved-trips" aria-labelledby="saved-trips-title">
+        <div>
+          <p className="eyebrow">YOUR LIBRARY</p>
+          <h3 id="saved-trips-title">Saved trips</h3>
+        </div>
+        {!historyLoaded ? (
+          <p className="form-hint">Loading saved trips…</p>
+        ) : savedItineraries.length === 0 ? (
+          <p className="form-hint">
+            No saved trips yet. Save a generated itinerary to find it here.
+          </p>
+        ) : (
+          <ul>
+            {savedItineraries.map((saved) => (
+              <li key={saved.id}>
+                <div>
+                  <strong>{saved.destination}</strong>
+                  <span>
+                    {saved.days[0]?.date ?? "No dates"} ·{" "}
+                    {saved.generation_mode === "demo"
+                      ? "sample data"
+                      : "live data"}
+                  </span>
+                </div>
+                <button
+                  className="text-button"
+                  type="button"
+                  onClick={() => saved.id && handleOpenSaved(saved.id)}
+                >
+                  Open
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </form>
   );
 }
